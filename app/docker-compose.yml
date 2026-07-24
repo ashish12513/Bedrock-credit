@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  bedrock-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      GOVERNANCE_API: https://sh0xxez42b.execute-api.us-east-1.amazonaws.com/prod
+      BEDROCK_PROXY_ENDPOINT: https://sh0xxez42b.execute-api.us-east-1.amazonaws.com/prod/bedrock-invoke
+      AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: 737185589565
+      ACCOUNT_ID: production-main
+      DEFAULT_QUALITY: balanced
+      DEFAULT_TASK_TYPE: default
+      DEFAULT_MAX_TOKENS: 1024
+      LOG_LEVEL: info
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

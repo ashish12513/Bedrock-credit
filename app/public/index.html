@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bedrock Sentinel Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0b0f14;
+      --panel: #12181f;
+      --text: #e4e9ee;
+      --muted: #66748a;
+      --gold: #e8a33d;
+      --teal: #2ad1b8;
+      --red: #e85d5d;
+      --green: #10b981;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    header {
+      background: linear-gradient(135deg, #0f1c16 0%, #0b0f14 100%);
+      border-bottom: 1px solid #1e2733;
+      padding: 20px 40px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    header h1 { font-size: 1.8em; font-weight: 700; margin-bottom: 5px; }
+    header p { color: var(--muted); font-size: 0.95em; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid #1e2733;
+      border-radius: 8px;
+      padding: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(42, 209, 184, 0.1);
+    }
+    .card-label {
+      font-size: 0.75em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+    .card-value {
+      font-size: 2.2em;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 8px;
+      font-family: 'Courier New', monospace;
+    }
+    .card-status {
+      font-size: 0.85em;
+      color: var(--teal);
+      font-weight: 500;
+    }
+    .section {
+      background: var(--panel);
+      border: 1px solid #1e2733;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .section h2 {
+      font-size: 1.3em;
+      margin-bottom: 20px;
+      color: var(--text);
+      border-bottom: 2px solid #1e2733;
+      padding-bottom: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95em;
+    }
+    th {
+      text-align: left;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 2px solid #1e2733;
+      color: var(--muted);
+      font-size: 0.8em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #171f29;
+    }
+    tr:hover { background: rgba(42, 209, 184, 0.05); }
+    button {
+      background: var(--gold);
+      color: #1a1204;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.95em;
+    }
+    button:hover {
+      background: #f5b85e;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    input {
+      background: #171f29;
+      border: 1px solid #1e2733;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 4px;
+      width: 100%;
+      max-width: 400px;
+      font-size: 0.95em;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 8px rgba(42, 209, 184, 0.2);
+    }
+    .loading {
+      color: var(--muted);
+      font-style: italic;
+      padding: 20px;
+      text-align: center;
+    }
+    .error {
+      background: rgba(232, 93, 93, 0.15);
+      color: #fca5a5;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      border-left: 3px solid var(--red);
+    }
+    .success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #86efac;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      border-left: 3px solid var(--green);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .stat-item {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 12px;
+      border-radius: 4px;
+      border-left: 3px solid var(--teal);
+    }
+    .stat-label { font-size: 0.8em; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 1.3em; font-weight: 700; color: var(--gold); }
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 20px;
+    }
+    .chatbot-container {
+      background: var(--panel);
+      border: 1px solid #1e2733;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      position: sticky;
+      top: 100px;
+    }
+    .chatbot-header {
+      padding: 16px;
+      border-bottom: 1px solid #1e2733;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .chatbot-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chatbot-msg {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      word-wrap: break-word;
+    }
+    .chatbot-msg.user {
+      background: rgba(232, 163, 61, 0.2);
+      text-align: right;
+      border-left: 3px solid var(--gold);
+    }
+    .chatbot-msg.assistant {
+      background: rgba(42, 209, 184, 0.2);
+      border-left: 3px solid var(--teal);
+    }
+    .chatbot-cost {
+      font-size: 0.75em;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .chatbot-input-group {
+      padding: 12px;
+      border-top: 1px solid #1e2733;
+      display: flex;
+      gap: 8px;
+    }
+    .chatbot-input-group input {
+      flex: 1;
+      max-width: none;
+      height: 36px;
+      padding: 8px;
+      font-size: 0.85em;
+    }
+    .chatbot-input-group button {
+      padding: 8px 12px;
+      font-size: 0.85em;
+      white-space: nowrap;
+    }
+    @media (max-width: 1200px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      .chatbot-container {
+        position: static;
+        height: auto;
+        max-height: 400px;
+      }
+    }
+    @media (max-width: 768px) {
+      .cards { grid-template-columns: 1fr; }
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🚀 Bedrock Sentinel Dashboard</h1>
+  <p>Real-time cost governance and usage analytics for Amazon Bedrock</p>
+</header>
+
+<div class="container">
+  <!-- KPI Cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Current Spend</div>
+      <div class="card-value" id="dailySpend">$0.00</div>
+      <div class="card-status" id="dailySpendStatus">Loading...</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total API Calls</div>
+      <div class="card-value" id="totalRequests">0</div>
+      <div class="card-status" id="totalRequestsStatus">Tracking...</div>
+    </div>
+    <div class="card">
+      <div class="card-label">App Cost</div>
+      <div class="card-value" id="appCost">$0.0000</div>
+      <div class="card-status" id="appCostStatus">0 requests</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total Tokens</div>
+      <div class="card-value" id="appTokens">0</div>
+      <div class="card-status" id="appTokensStatus">0 avg/req</div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div>
+      <!-- Governance Status Section -->
+      <div class="section">
+        <h2>🛡️ Governance Status</h2>
+        <div id="governanceStatus" class="loading">Loading governance data...</div>
+      </div>
+
+      <!-- Recommendations Section -->
+      <div class="section">
+        <h2>💡 Cost Optimization Recommendations</h2>
+        <div id="recommendations" class="loading">Loading recommendations...</div>
+      </div>
+
+      <!-- Admin Dashboard Section -->
+      <div class="section">
+        <h2>👨‍💼 Admin Control Plane</h2>
+        
+        <!-- Organization Usage -->
+        <div style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 15px;">📊 Organization-Wide Usage</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Total Monthly Spend</div>
+              <div class="stat-value" id="orgMonthlySpend">$0.00</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Today's Spend</div>
+              <div class="stat-value" id="orgDailySpend">$0.00</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Projected Monthly</div>
+              <div class="stat-value" id="orgProjected">$0.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Member Accounts -->
+        <div style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 15px;">🏢 Member Accounts</h3>
+          <table>
+            <tr>
+              <th>Account Name</th>
+              <th>Status</th>
+              <th>Monthly Spend</th>
+              <th>Quota Limit</th>
+              <th>Usage %</th>
+              <th>Action</th>
+            </tr>
+            <tbody id="accountsTable">
+              <tr><td colspan="6" class="loading">Loading accounts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Model Access Management -->
+        <div style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 15px;">🤖 Model Access Control</h3>
+          <table>
+            <tr>
+              <th>Model</th>
+              <th>Provider</th>
+              <th style="text-align: center;">Production</th>
+              <th style="text-align: center;">Staging</th>
+              <th style="text-align: center;">Testing</th>
+            </tr>
+            <tbody id="modelsTable">
+              <tr><td colspan="5" class="loading">Loading models...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Alerts -->
+        <div style="margin-bottom: 30px;">
+          <h3 style="margin-bottom: 15px;">⚠️ Active Alerts</h3>
+          <div id="alertsContainer" class="loading">Loading alerts...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chatbot Sidebar -->
+    <div class="chatbot-container">
+      <div class="chatbot-header">💬 Claude Assistant</div>
+      <div class="chatbot-messages" id="chatbotMessages">
+        <div class="chatbot-msg assistant">Hi! I'm Claude. Ask me about your Bedrock costs or anything else!</div>
+      </div>
+      <div class="chatbot-input-group">
+        <input type="text" id="chatbotInput" placeholder="Ask Claude..." />
+        <button onclick="sendChatbotMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = '';
+let chatbotHistory = [];
+
+// Format currency
+function formatCurrency(value) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+}
+
+// Load Dashboard Metrics
+async function loadMetrics() {
+  try {
+    const response = await fetch(`${API_BASE}/api/dashboard/metrics`);
+    const data = await response.json();
+    
+    if (data.success && data.metrics) {
+      const m = data.metrics;
+      
+      document.getElementById('dailySpend').textContent = formatCurrency(m.spending?.daily || 0);
+      document.getElementById('dailySpendStatus').textContent = (m.spending?.period || 'Daily') + ' • ' + (m.spending?.percentageUsed || 0) + '% of limit';
+      
+      document.getElementById('totalRequests').textContent = (m.summary?.totalInvocations || 0).toLocaleString();
+      document.getElementById('totalRequestsStatus').textContent = formatCurrency(m.summary?.totalSpend || 0) + ' total';
+      
+      document.getElementById('appCost').textContent = formatCurrency(parseFloat(m.appStats?.totalCost || 0));
+      document.getElementById('appCostStatus').textContent = (m.appStats?.requests || 0) + ' requests';
+      
+      document.getElementById('appTokens').textContent = (m.summary?.totalTokens || 0).toLocaleString();
+      document.getElementById('appTokensStatus').textContent = 'tokens consumed';
+    }
+  } catch (error) {
+    console.error('Error loading metrics:', error);
+  }
+}
+
+// Load Governance Status
+async function loadGovernance() {
+  try {
+    const response = await fetch(`${API_BASE}/api/governance/status`);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      const d = data.data;
+      let html = '<div class="stats-grid">';
+      
+      if (d.guardrails?.guardrails) {
+        const guardrails = d.guardrails.guardrails;
+        
+        html += '<div style="grid-column: 1 / -1;"><strong>Protected Models:</strong></div>';
+        if (guardrails.models) {
+          guardrails.models.forEach(model => {
+            html += `<div class="stat-item">
+              <div class="stat-label">${model.name}</div>
+              <div class="stat-value">$${model.dailyLimit}/day</div>
+            </div>`;
+          });
+        }
+      }
+      
+      html += '</div>';
+      document.getElementById('governanceStatus').innerHTML = html;
+    }
+  } catch (error) {
+    console.error('Error loading governance:', error);
+  }
+}
+
+// Load Recommendations
+async function loadRecommendations() {
+  try {
+    const response = await fetch(`${API_BASE}/api/dashboard/recommendations`);
+    const data = await response.json();
+    
+    if (data.success) {
+      if (data.data?.items && data.data.items.length > 0) {
+        let html = '<table><tr><th>Recommendation</th><th>Potential Savings</th><th>Effort</th></tr>';
+        data.data.items.forEach(item => {
+          html += `<tr><td>${item.title || 'Optimization'}</td><td>${item.savings || 'TBD'}</td><td>${item.effort || 'Medium'}</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('recommendations').innerHTML = html;
+      } else {
+        document.getElementById('recommendations').innerHTML = '<div class="loading">No recommendations available yet.</div>';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading recommendations:', error);
+  }
+}
+
+// Send Chatbot Message
+async function sendChatbotMessage() {
+  const input = document.getElementById('chatbotInput');
+  const message = input.value.trim();
+  
+  if (!message) return;
+  
+  const messagesDiv = document.getElementById('chatbotMessages');
+  
+  // Add user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chatbot-msg user';
+  userMsg.textContent = message;
+  messagesDiv.appendChild(userMsg);
+  
+  input.value = '';
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  // Add to conversation history
+  chatbotHistory.push({ role: 'user', content: message });
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/bedrock/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        conversationHistory: chatbotHistory
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      chatbotHistory.push({ role: 'assistant', content: data.message });
+      
+      const assistantMsg = document.createElement('div');
+      assistantMsg.className = 'chatbot-msg assistant';
+      assistantMsg.innerHTML = data.message + `<div class="chatbot-cost">💰 ${formatCurrency(data.cost || 0)}</div>`;
+      messagesDiv.appendChild(assistantMsg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      
+      setTimeout(loadMetrics, 1000);
+    }
+  } catch (error) {
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'chatbot-msg assistant';
+    errorMsg.style.color = '#fca5a5';
+    errorMsg.textContent = 'Error: ' + error.message;
+    messagesDiv.appendChild(errorMsg);
+  }
+}
+
+// Load admin data
+async function loadAdminDashboard() {
+  loadOrganizationUsage();
+  loadMemberAccounts();
+  loadModelAccess();
+  loadAlerts();
+}
+
+// Load organization-wide usage
+async function loadOrganizationUsage() {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/usage`);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      document.getElementById('orgMonthlySpend').textContent = formatCurrency(data.data.totalMonthlySpend || 0);
+      document.getElementById('orgDailySpend').textContent = formatCurrency(data.data.totalDailySpend || 0);
+      document.getElementById('orgProjected').textContent = formatCurrency(data.data.forecast?.monthlyProjected || 0);
+    }
+  } catch (error) {
+    console.error('Error loading organization usage:', error);
+  }
+}
+
+// Load member accounts
+async function loadMemberAccounts() {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/accounts`);
+    const data = await response.json();
+    
+    if (data.success && data.data.accounts) {
+      const tbody = document.getElementById('accountsTable');
+      tbody.innerHTML = data.data.accounts.map(account => `
+        <tr>
+          <td><strong>${account.name}</strong></td>
+          <td><span style="color: #10b981;">● ${account.status}</span></td>
+          <td>$${account.usage.monthly.toFixed(2)}</td>
+          <td>$${account.usage.limit.toFixed(2)}</td>
+          <td>${Math.round((account.usage.monthly / account.usage.limit) * 100)}%</td>
+          <td>
+            <button onclick="editQuota('${account.id}', '${account.name}')" style="font-size: 0.8em; padding: 6px 12px;">Edit Quota</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  } catch (error) {
+    console.error('Error loading accounts:', error);
+  }
+}
+
+// Edit quota for account
+async function editQuota(accountId, accountName) {
+  const newLimit = prompt(`Set monthly quota for ${accountName} (current: $10000):`, '10000');
+  if (!newLimit) return;
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/quotas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        accountId: accountId,
+        monthlyLimit: parseInt(newLimit),
+        dailyLimit: Math.floor(parseInt(newLimit) / 30)
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert(`✓ Quota updated for ${accountName}`);
+      loadMemberAccounts();
+    } else {
+      alert(`Error: ${data.error}`);
+    }
+  } catch (error) {
+    alert(`Failed to update quota: ${error.message}`);
+  }
+}
+
+// Load model access
+async function loadModelAccess() {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/models`);
+    const data = await response.json();
+    
+    if (data.success && data.data.models) {
+      const tbody = document.getElementById('modelsTable');
+      tbody.innerHTML = data.data.models.map(model => {
+        const shortName = model.name.replace('Claude ', '');
+        return `
+          <tr>
+            <td><strong>${shortName}</strong></td>
+            <td>${model.provider}</td>
+            <td style="text-align: center;">
+              <button onclick="toggleModelAccess('${model.id}', 'production-main', ${model.accessStatus['production-main']})" 
+                style="font-size: 0.7em; padding: 4px 8px; background: ${model.accessStatus['production-main'] ? '#10b981' : '#e85d5d'};">
+                ${model.accessStatus['production-main'] ? '✅ On' : '❌ Off'}
+              </button>
+            </td>
+            <td style="text-align: center;">
+              <button onclick="toggleModelAccess('${model.id}', 'staging-dev', ${model.accessStatus['staging-dev']})" 
+                style="font-size: 0.7em; padding: 4px 8px; background: ${model.accessStatus['staging-dev'] ? '#10b981' : '#e85d5d'};">
+                ${model.accessStatus['staging-dev'] ? '✅ On' : '❌ Off'}
+              </button>
+            </td>
+            <td style="text-align: center;">
+              <button onclick="toggleModelAccess('${model.id}', 'testing-qa', ${model.accessStatus['testing-qa']})" 
+                style="font-size: 0.7em; padding: 4px 8px; background: ${model.accessStatus['testing-qa'] ? '#10b981' : '#e85d5d'};">
+                ${model.accessStatus['testing-qa'] ? '✅ On' : '❌ Off'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  } catch (error) {
+    console.error('Error loading models:', error);
+  }
+}
+
+// Toggle model access
+async function toggleModelAccess(modelId, accountId, currentStatus) {
+  const action = currentStatus ? 'disable' : 'enable';
+  const endpoint = currentStatus ? 'disable' : 'enable';
+  
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/models/${modelId}/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accountId: accountId })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert(`✓ Model ${action}d for ${accountId}`);
+      loadModelAccess();
+    } else {
+      alert(`Error: ${data.error}`);
+    }
+  } catch (error) {
+    alert(`Failed to ${action} model: ${error.message}`);
+  }
+}
+
+// Load active alerts
+async function loadAlerts() {
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/alerts`);
+    const data = await response.json();
+    
+    if (data.success) {
+      const container = document.getElementById('alertsContainer');
+      
+      if (data.data.alerts && data.data.alerts.length > 0) {
+        container.innerHTML = data.data.alerts.map(alert => `
+          <div style="background: rgba(251, 191, 36, 0.15); border-left: 3px solid #fbbf24; padding: 12px; margin-bottom: 10px; border-radius: 4px;">
+            <div style="font-weight: 600;">${alert.account}: ${alert.level}% quota used</div>
+            <div style="color: #d1d5db; font-size: 0.9em; margin-top: 4px;">${alert.message}</div>
+            <button onclick="alert('Alert acknowledged')" style="margin-top: 8px; padding: 4px 8px; font-size: 0.8em;">Acknowledge</button>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = '<div class="success">✓ No active alerts - all accounts within quota</div>';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading alerts:', error);
+  }
+}
+
+// Initialize on page load
+window.addEventListener('load', () => {
+  loadMetrics();
+  loadGovernance();
+  loadRecommendations();
+  loadAdminDashboard();
+  
+  // Refresh metrics every 30 seconds
+  setInterval(loadMetrics, 30000);
+  
+  // Refresh governance every 60 seconds
+  setInterval(loadGovernance, 60000);
+  
+  // Refresh admin dashboard every 2 minutes
+  setInterval(loadAdminDashboard, 120000);
+});
+
+// Allow Enter key to send message in chatbot
+document.addEventListener('DOMContentLoaded', () => {
+  const chatbotInput = document.getElementById('chatbotInput');
+  if (chatbotInput) {
+    chatbotInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatbotMessage();
+    });
+  }
+});
+</script>
+
+</body>
+</html>
